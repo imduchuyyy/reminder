@@ -1,5 +1,5 @@
 import { Bot, Context, session, InlineKeyboard } from "grammy";
-import { config } from "./config";
+import { config, formatDateInTimezone } from "./config";
 import { createTask, getTasks, getTaskById, updateTask, deleteTask, getTodayTasks } from "./db";
 import { startScheduler, handleTaskDone, handleSnooze } from "./scheduler";
 import type { RepeatType, Task } from "./types";
@@ -51,7 +51,7 @@ function formatTask(task: Task): string {
   }
 
   const dueDate = new Date(task.dueTime);
-  lines.push(`   ⏰ ${dueDate.toLocaleString()}`);
+  lines.push(`   ⏰ ${formatDateInTimezone(dueDate)}`);
 
   if (task.repeat !== "none") {
     lines.push(`   🔄 ${task.repeat}`);
@@ -349,7 +349,7 @@ bot.on("message:text", async (ctx) => {
       const newTime = parseTimeInput(text);
       if (newTime) {
         updateTask(taskId, chatId, { dueTime: newTime, reminded: false });
-        await ctx.reply(`✅ Time updated to: ${newTime.toLocaleString()}`);
+        await ctx.reply(`✅ Time updated to: ${formatDateInTimezone(newTime)}`);
       } else {
         await ctx.reply("❌ Invalid time format. Edit cancelled.");
       }
@@ -390,7 +390,7 @@ bot.on("callback_query:data", async (ctx) => {
 
     await ctx.answerCallbackQuery();
     await ctx.editMessageText(
-      `✅ **Task created!**\n\n${formatTask(task)}\n\nI'll remind you at ${dueTime.toLocaleString()}`,
+      `✅ **Task created!**\n\n${formatTask(task)}\n\nI'll remind you at ${formatDateInTimezone(dueTime)}`,
       { parse_mode: "Markdown" }
     );
     return;

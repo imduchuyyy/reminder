@@ -1,5 +1,6 @@
 import type { Bot, Context } from "grammy";
 import type { Task } from "./types";
+import { formatDateInTimezone } from "./config";
 import { getDueTasks, updateTask, rescheduleRepeatingTask } from "./db";
 
 let schedulerInterval: ReturnType<typeof setInterval> | null = null;
@@ -12,7 +13,7 @@ function formatTaskReminder(task: Task): string {
   }
 
   const dueDate = new Date(task.dueTime);
-  lines.push(`⏰ ${dueDate.toLocaleString()}`);
+  lines.push(`⏰ ${formatDateInTimezone(dueDate)}`);
 
   if (task.repeat !== "none") {
     lines.push(`🔄 Repeats: ${task.repeat}`);
@@ -90,7 +91,7 @@ export function handleTaskDone(taskId: number, chatId: number): string {
     const rescheduled = rescheduleRepeatingTask(task);
     if (rescheduled) {
       const nextDate = new Date(rescheduled.dueTime);
-      return `✅ Task "${task.title}" completed!\n\n🔄 Next occurrence: ${nextDate.toLocaleString()}`;
+      return `✅ Task "${task.title}" completed!\n\n🔄 Next occurrence: ${formatDateInTimezone(nextDate)}`;
     }
   }
 
@@ -108,5 +109,5 @@ export function handleSnooze(taskId: number, chatId: number, minutes: number): s
     return "❌ Task not found";
   }
 
-  return `⏰ Task "${task.title}" snoozed until ${newTime.toLocaleString()}`;
+  return `⏰ Task "${task.title}" snoozed until ${formatDateInTimezone(newTime)}`;
 }
