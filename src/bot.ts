@@ -23,6 +23,24 @@ const bot = new Bot<MyContext>(config.botToken);
 // Install session middleware
 bot.use(session({ initial: (): SessionData => ({ state: "idle" }) }));
 
+// User whitelist middleware - only allow specified users
+bot.use(async (ctx, next) => {
+  // If no allowed users configured, allow everyone
+  if (config.allowedUsers.length === 0) {
+    return next();
+  }
+
+  const username = ctx.from?.username?.toLowerCase();
+
+  if (!username || !config.allowedUsers.includes(username)) {
+    // Silently ignore unauthorized users
+    console.log(`⛔ Unauthorized access attempt from: ${username || "unknown"}`);
+    return;
+  }
+
+  return next();
+});
+
 // Helper to format task for display
 function formatTask(task: Task): string {
   const status = task.completed ? "✅" : "⏳";
