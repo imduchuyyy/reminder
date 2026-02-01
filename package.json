@@ -1,0 +1,21 @@
+{
+  "name": "reminder",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun run index.ts",
+    "dev": "bun --watch run index.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@grammyjs/conversations": "^2.1.1",
+    "grammy": "^1.39.3"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
