@@ -1,9 +1,10 @@
 import type { Bot, Context } from "grammy";
 import type { Task } from "./types";
 import { formatDateInTimezone } from "./config";
-import { getDueTasks, updateTask, rescheduleRepeatingTask } from "./db";
+import { getDueTasks, updateTask, rescheduleRepeatingTask, cleanupOldTasks } from "./db";
 
 let schedulerInterval: ReturnType<typeof setInterval> | null = null;
+let lastCleanupDay = new Date().getDate();
 
 function formatTaskReminder(task: Task): string {
   const lines = [`🔔 **Reminder!**`, ``, `📌 **${task.title}**`];
@@ -45,10 +46,17 @@ async function checkAndSendReminders(bot: Bot<Context>): Promise<void> {
 
         // Mark as reminded so we don't send again
         updateTask(task.id, task.chatId, { reminded: true });
-        console.log(`📤 Sent reminder for task ${task.id}: ${task.title}`);
+        // Removed verbose logging to prevent log starvation
       } catch (error) {
         console.error(`Failed to send reminder for task ${task.id}:`, error);
       }
+    }
+
+    // Run cleanup once a day
+    const currentDay = new Date().getDate();
+    if (currentDay !== lastCleanupDay) {
+      cleanupOldTasks();
+      lastCleanupDay = currentDay;
     }
   } catch (error) {
     console.error("Error checking reminders:", error);

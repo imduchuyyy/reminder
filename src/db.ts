@@ -6,6 +6,8 @@ const db = new Database(config.dbPath);
 
 // Initialize database schema
 db.exec(`
+  PRAGMA auto_vacuum = FULL;
+
   CREATE TABLE IF NOT EXISTS tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     chatId INTEGER NOT NULL,
@@ -172,4 +174,20 @@ export function rescheduleRepeatingTask(task: Task): Task | null {
     completed: false,
     reminded: false,
   });
+}
+
+export function cleanupOldTasks(): void {
+  // Delete one-time tasks that are completed and older than 30 days
+  const result = db.prepare(`
+    DELETE FROM tasks 
+    WHERE completed = 1 
+      AND repeat = 'none' 
+      AND datetime(dueTime) <= datetime('now', '-30 days')
+  `).run();
+
+  if (result.changes > 0) {
+    console.log(`🧹 Cleaned up ${result.changes} old completed tasks.`);
+    // Vacuum to shrink the physical file size
+    db.exec("VACUUM;");
+  }
 }
